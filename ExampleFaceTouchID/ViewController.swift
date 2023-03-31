@@ -11,9 +11,17 @@ import LocalAuthentication
 
 class ViewController: UIViewController {
     
-    var label: UILabel = {
+    var valueLabel: UILabel = {
         var label = UILabel()
-        label.text = "??"
+        label.text = "value"
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        return label
+    }()
+    
+    var errorLabel: UILabel = {
+        var label = UILabel()
+        label.text = "error"
         label.translatesAutoresizingMaskIntoConstraints = false
         
         return label
@@ -38,7 +46,8 @@ class ViewController: UIViewController {
         
         button.addTarget(self, action: #selector(clickBtn), for: .touchUpInside)
         
-        view.addSubview(label)
+        view.addSubview(valueLabel)
+        view.addSubview(errorLabel)
         view.addSubview(button)
         
         
@@ -48,33 +57,57 @@ class ViewController: UIViewController {
         ])
         
         NSLayoutConstraint.activate([
-            self.label.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 80),
-            self.label.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            self.label.bottomAnchor.constraint(equalTo: self.button.topAnchor)
+            self.valueLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 80),
+            self.valueLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            self.valueLabel.bottomAnchor.constraint(equalTo: self.button.topAnchor)
+        ])
+        
+        NSLayoutConstraint.activate([
+            self.errorLabel.topAnchor.constraint(equalTo: self.valueLabel.topAnchor, constant: 40),
+            self.errorLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            self.errorLabel.bottomAnchor.constraint(equalTo: self.button.topAnchor)
         ])
     }
     
     
+    /// 버튼 클릭
     @objc func clickBtn() {
-        print("asdasd")
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "인증해보자") { (value, error) in
+        print("click button")
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: getBiometry()) { (value, error) in
             print("value = \(value), error = \(error)")
             
             guard error == nil else {
                 print("error = \(error?.localizedDescription)")
                 
-                // value값 출력
+                // value 값 출력
                 DispatchQueue.main.async {
-                    self.label.text = value.description
+                    self.valueLabel.text = value.description
+                    self.errorLabel.text = error?.localizedDescription
                 }
                 
                 return
             }
             
-            // value값 출력
+            // value 값 출력
             DispatchQueue.main.async {
-                self.label.text = value.description
+                self.valueLabel.text = value.description
+                self.errorLabel.text = error?.localizedDescription
             }
+        }
+    }
+    
+    /// 생체인증 타입 가져오기
+    func getBiometry() -> String {
+        print("context.biometryType = \(context.biometryType)")
+        switch context.biometryType {
+        case .faceID:
+            return "Use Face ID instead of a password to access your account."
+        case .touchID:
+            return "Use Touch ID instead of a password to access your account."
+        case .none:
+            return "none"
+        @unknown default:
+            fatalError()
         }
     }
 }
